@@ -10,6 +10,7 @@ library(tidyverse)
 
 ## loading the data set (make sure directory is set up properly or it won't load)
 ```{r}
+setwd("C:/Users/drami/OneDrive/Pictures/Desktop/DATASCI/DataSciInnovIntern/data")
 acs <- read.csv("2000_acs_sample.csv")
 ```
 
@@ -50,7 +51,7 @@ acs <- acs |>
     male = ifelse(sex == 1, 1, 0)
   )
 
-  acs
+  colnames(acs)
 ```
 
 ## gq
