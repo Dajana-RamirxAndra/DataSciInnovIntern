@@ -1,0 +1,76 @@
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## loading libraries 
+```{r}
+library(tidyverse)
+library(lubridate)
+```
+
+```{r}
+acs <- read.csv("data/2000_acs_sample.csv")
+head(acs)
+```
+
+```{r}
+glimpse(acs)
+summary(acs)
+```
+
+```{r}
+nrow(acs)
+ncol(acs)
+colnames(acs)
+````
+
+```{r}
+acs |> 
+  pull(year) |> 
+  unique() |> 
+  length()
+```
+
+```{r}
+acs <- 
+  acs |> 
+  rename(person = pernum,
+         household = serial)
+```
+
+```{r}
+acs <- 
+  acs |> 
+  rename_with(\(x) str_remove(x, "us2000c_"))
+```
+
+```{r}
+acs <- 
+  acs |> 
+  mutate(age_months = age * 12)
+
+```
+
+```{r}
+acs <- 
+  acs |> 
+  mutate(teenager = age >= 13 & age <= 19)
+```
+
+```{r}
+acs <- 
+  acs |> 
+  mutate(id = paste(household, person, sep = "_"))
+```
+
+```{r}
+acs <- 
+  acs |> 
+  mutate(date = paste0(year, "0101") |> ymd())
+```
+
+```{r}
+acs <- 
+  acs |> 
+  mutate(female = ifelse(sex == 2, 1, 0))
+```
