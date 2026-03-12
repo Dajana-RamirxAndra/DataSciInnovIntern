@@ -5,72 +5,94 @@ knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ## loading libraries 
 ```{r}
 library(tidyverse)
-library(lubridate)
 ```
 
+
+## loading the data set (make sure directory is set up properly or it won't load)
 ```{r}
-acs <- read.csv("data/2000_acs_sample.csv")
+acs <- read.csv("2000_acs_sample.csv")
+```
+
+## quick look at the data
+```{r}
 head(acs)
-```
-
-```{r}
 glimpse(acs)
 summary(acs)
-```
-
-```{r}
 nrow(acs)
 ncol(acs)
 colnames(acs)
-````
+```
 
+## unique years
 ```{r}
 acs |> 
-  pull(year) |> 
-  unique() |> 
-  length()
+  pull(year) |> unique() |> length()
 ```
 
+## renaming
 ```{r}
-acs <- 
-  acs |> 
+acs <- acs |> 
   rename(person = pernum,
-         household = serial)
-```
-
-```{r}
-acs <- 
-  acs |> 
+         household = serial) |> 
   rename_with(\(x) str_remove(x, "us2000c_"))
+colnames(acs)
+```
+
+## new variables 
+```{r}
+acs <- acs |> 
+  mutate(
+    age_months = age * 12,
+    teenager = age >= 13 & age <= 19,
+    id = paste(household, person, sep = "_"),
+    date = paste0(year, "0101") |> ymd(),
+    female = ifelse(sex == 2, 1, 0),
+    male = ifelse(sex == 1, 1, 0)
+  )
+
+  acs
+```
+
+## gq
+```{r}
+acs |> pull(gq) |> unique()
+```
+## group quarters
+```{r}
+acs <-
+  acs |> 
+  mutate(gq_recode = fct_collapse(gq,"Households" = c("Households under 1970 definition","Additional households under 1990 definition"),"Group Quarters" = c("Group quarters--Institutions", "Other group quarters")))
+```
+
+## education
+```{r}
+acs <-
+  acs |> 
+  mutate(educ_categories = case_when(educ >= 1 & educ <= 8 ~ "Less than High School", educ == 9 ~ "High School", educ >=  10 & educ <= 12 ~ "Some College", educ == 13 ~ "Bachelors",educ >= 14 ~ "Advanced Degree"),educ_categories = fct_relevel(educ_categories,"Less than High School","High School","Some College","Bachelors","Advanced Degree"))
 ```
 
 ```{r}
-acs <- 
-  acs |> 
-  mutate(age_months = age * 12)
-
+table(acs$educ, acs$educ_categories, useNA = "ifany")
+```
+## cleaning the income column 
+```{r}
+acs <- acs |> 
+  mutate(income = as.numeric(ifelse(inctot %in% c("BBBBBBB"), NA, inctot)))
+summary(acs$income)
+```
+## age
+```{r}
+acs <- acs |> 
+  mutate(age = ifelse(age == 933, 93, age))
+```
+## missing data
+```{r}
+acs |> is.na() |> sum()
+acs |> is.na() |> mean()
+acs |> is.na() |> colSums()
+acs |> is.na() |> colMeans()
 ```
 
 ```{r}
-acs <- 
-  acs |> 
-  mutate(teenager = age >= 13 & age <= 19)
-```
-
-```{r}
-acs <- 
-  acs |> 
-  mutate(id = paste(household, person, sep = "_"))
-```
-
-```{r}
-acs <- 
-  acs |> 
-  mutate(date = paste0(year, "0101") |> ymd())
-```
-
-```{r}
-acs <- 
-  acs |> 
-  mutate(female = ifelse(sex == 2, 1, 0))
+saveRDS(acs, "acs_cleaned.rds")
 ```
